@@ -72,7 +72,7 @@ jobs:
               'echo Pulling the new Docker image...',
               'docker pull ${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/static-website:latest',
               'echo Starting the containers with new image...',
-              'docker-compose -f /home/ubuntu/docker-compose.yml up -d',
+              'docker-compose -f /home/ubuntu/docker-compose.yml up -d -y',
               'echo Cleaning up unused images...',
               'docker system prune -f || true',
               'echo Deployment complete!'
