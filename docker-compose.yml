@@ -1,0 +1,8 @@
+version: '3.8'
+
+services:
+  static-website:
+    image: static-website:latest
+    ports:
+      - "3000:5173"
+    restart: always
