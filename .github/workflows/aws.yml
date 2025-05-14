@@ -30,13 +30,13 @@ jobs:
           aws ecr get-login-password --region ${{ secrets.AMAZON_S3_REGION_NAME }} | docker login --username AWS --password-stdin ${{ secrets.ECR_URI }}
 
           # Build Docker image
-          docker build -t static-website:latest .
+          docker build -t static-website:v1 .
 
           # Tag the image
-          docker tag static-website:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AMAZON_S3_REGION_NAME }}.amazonaws.com/static-website:latest
+          docker tag static-website:v1 ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AMAZON_S3_REGION_NAME }}.amazonaws.com/static-website:v1
 
           # Push the Docker image to ECR
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AMAZON_S3_REGION_NAME }}.amazonaws.com/static-website:latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AMAZON_S3_REGION_NAME }}.amazonaws.com/static-website:v1
 
       # Step 4: Upload docker-compose.yml to S3
       - name: Upload docker-compose.yml to S3
@@ -70,7 +70,7 @@ jobs:
               'echo Logging into ECR...',
               'aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ECR_URI}',
               'echo Pulling the new Docker image...',
-              'docker pull ${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/static-website:latest',
+              'docker pull ${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/static-website:v1',
               'echo Starting the containers with new image...',
               'docker-compose -f /home/ubuntu/docker-compose.yml up -d',
               'echo Cleaning up unused images...',
