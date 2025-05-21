@@ -50,6 +50,14 @@ jobs:
           AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}
           INSTANCE_ID=i-07a7ff0d0e44e03c5
 
+      - name: Deploy Docker Stack via SSM
+        run: |
+          S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
+          REGION=${{ secrets.AMAZON_S3_REGION_NAME }}
+          ECR_URI=${{ secrets.ECR_URI }}
+          AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}
+          INSTANCE_ID=i-07a7ff0d0e44e03c5
+
           COMMAND_ID=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets "Key=instanceIds,Values=${INSTANCE_ID}" \
@@ -59,8 +67,8 @@ jobs:
               'docker swarm init || echo Already initialized',
               'echo Downloading the docker-stack.yml from S3...',
               'aws s3 cp s3://${S3_BUCKET_NAME}/docker-stack.yml /home/ubuntu/docker-stack.yml --region ${REGION}',
-              'echo Logging into ECR...',
-              'aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 831926608672.dkr.ecr.ap-south-1.amazonaws.com',
+              'echo Logging into ECR (with sudo)...',
+              'aws ecr get-login-password --region ${REGION} | sudo docker login --username AWS --password-stdin ${ECR_URI}',
               'echo Deploying with Docker Stack...',
               'docker stack deploy -c /home/ubuntu/docker-stack.yml myapp',
               'echo Deployment complete!'
