@@ -62,7 +62,7 @@ jobs:
               'echo Logging into ECR...',
               'aws ecr get-login-password --region ${REGION} | sudo docker login --username AWS --password-stdin ${ECR_URI}',
               'echo Deploying with Docker Stack...',
-              'sudo docker stack deploy -c /home/ubuntu/docker-stack.yml --with-registry-auth statwebsite',
+              'sudo docker stack deploy -c /home/ubuntu/docker-stack.yml --with-registry-auth static-website',
               'echo Deployment complete!'
             ]" \
             --comment "Swarm Deployment with Zero Downtime" \
