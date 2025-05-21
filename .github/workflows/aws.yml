@@ -42,39 +42,34 @@ jobs:
           AWS_DEFAULT_REGION: ${{ secrets.AMAZON_S3_REGION_NAME }}
 
       # Step 5: Deploy Docker Stack on EC2 via SSM (Docker Swarm)
-      - name: Deploy Docker Stack via SSM
+      - name: Deploy Docker Stack on EC2 via SSM
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+          ECR_URI: ${{ secrets.ECR_URI }}
+          INSTANCE_ID: i-07a7ff0d0e44e03c5
         run: |
-          S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
-          REGION=${{ secrets.AMAZON_S3_REGION_NAME }}
-          ECR_URI=${{ secrets.ECR_URI }}
-          AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}
-          INSTANCE_ID=i-07a7ff0d0e44e03c5
-
-      - name: Deploy Docker Stack via SSM
-        run: |
-          S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
-          REGION=${{ secrets.AMAZON_S3_REGION_NAME }}
-          ECR_URI=${{ secrets.ECR_URI }}
-          AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}
-          INSTANCE_ID=i-07a7ff0d0e44e03c5
+          set -e
 
           COMMAND_ID=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets "Key=instanceIds,Values=${INSTANCE_ID}" \
-            --parameters "commands=[
+            --parameters commands="[
               'set -e',
-              'echo Enabling Docker Swarm...',
-              'docker swarm init || echo Already initialized',
-              'echo Downloading the docker-stack.yml from S3...',
-              'aws s3 cp s3://${S3_BUCKET_NAME}/docker-stack.yml /home/ubuntu/docker-stack.yml --region ${REGION}',
-              'echo Logging into ECR (with sudo)...',
-              'aws ecr get-login-password --region ${REGION} | sudo docker login --username AWS --password-stdin ${ECR_URI}',
-              'echo Deploying with Docker Stack...',
-              'docker stack deploy -c /home/ubuntu/docker-stack.yml myapp',
-              'echo Deployment complete!'
+              'echo Initializing Docker Swarm...',
+              'sudo docker swarm init || echo Swarm already initialized',
+              'echo Downloading stack file from S3...',
+              'aws s3 cp s3://${S3_BUCKET_NAME}/docker-stack.yml /home/ubuntu/docker-stack.yml --region ${AWS_REGION}',
+              'echo Logging into ECR...',
+              'aws ecr get-login-password --region ${AWS_REGION} | sudo docker login --username AWS --password-stdin ${ECR_URI}',
+              'echo Deploying Docker Stack...',
+              'sudo docker stack deploy -c /home/ubuntu/docker-stack.yml myapp',
+              'echo Deployment done!'
             ]" \
-            --comment "Swarm Deployment with Zero Downtime" \
-            --region "$REGION" \
+            --comment "Automated Docker Swarm deploy via GitHub Actions" \
+            --region ${AWS_REGION} \
             --query "Command.CommandId" --output text)
 
           echo "SSM Command ID: $COMMAND_ID"
@@ -83,29 +78,18 @@ jobs:
             STATUS=$(aws ssm get-command-invocation \
               --command-id $COMMAND_ID \
               --instance-id $INSTANCE_ID \
-              --region $REGION \
+              --region $AWS_REGION \
               --query "Status" --output text)
-
-            echo "Current Status: $STATUS"
+            echo "Current SSM command status: $STATUS"
 
             if [ "$STATUS" = "Success" ]; then
-              echo "SSM Command completed successfully!"
+              echo "Deployment succeeded!"
               break
-            elif [ "$STATUS" = "Failed" ] || [ "$STATUS" = "Cancelled" ]; then
-              echo "SSM Command failed or was cancelled."
-              aws ssm get-command-invocation \
-                --command-id $COMMAND_ID \
-                --instance-id $INSTANCE_ID \
-                --region $REGION \
-                --query "StandardErrorContent" --output text
-
-              aws ssm get-command-invocation \
-                --command-id $COMMAND_ID \
-                --instance-id $INSTANCE_ID \
-                --region $REGION \
-                --query "StandardOutputContent" --output text
+            elif [[ "$STATUS" =~ ^(Failed|Cancelled|TimedOut)$ ]]; then
+              echo "Deployment failed with status: $STATUS"
+              aws ssm get-command-invocation --command-id $COMMAND_ID --instance-id $INSTANCE_ID --region $AWS_REGION --query "StandardErrorContent" --output text
               exit 1
             else
-              sleep 10
+              sleep 5
             fi
           done
