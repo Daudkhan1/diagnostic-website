@@ -4,7 +4,7 @@ services:
   static-website:
     image: 831926608672.dkr.ecr.ap-south-1.amazonaws.com/static-website:v3
     ports:
-      - "3001:5173"
+      - "3000:5173"
     deploy:
       mode: replicated
       replicas: 1
