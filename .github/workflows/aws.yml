@@ -28,9 +28,9 @@ jobs:
         run: |
           aws ecr get-login-password --region ${{ secrets.AMAZON_S3_REGION_NAME }} | docker login --username AWS --password-stdin ${{ secrets.ECR_URI }}
 
-          docker build -t static-website:v1 .
-          docker tag static-website:v1 ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AMAZON_S3_REGION_NAME }}.amazonaws.com/static-website:v1
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AMAZON_S3_REGION_NAME }}.amazonaws.com/static-website:v1
+          docker build -t static-website:v2 .
+          docker tag static-website:v2 ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AMAZON_S3_REGION_NAME }}.amazonaws.com/static-website:v2
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AMAZON_S3_REGION_NAME }}.amazonaws.com/static-website:v2
 
       # Step 4: Upload docker-stack.yml to S3 (Swarm stack file)
       - name: Upload docker-stack.yml to S3
