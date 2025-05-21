@@ -60,7 +60,7 @@ jobs:
               'echo Downloading the docker-stack.yml from S3...',
               'aws s3 cp s3://${S3_BUCKET_NAME}/docker-stack.yml /home/ubuntu/docker-stack.yml --region ${REGION}',
               'echo Logging into ECR...',
-              'aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ECR_URI}',
+              'aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 831926608672.dkr.ecr.ap-south-1.amazonaws.com',
               'echo Deploying with Docker Stack...',
               'docker stack deploy -c /home/ubuntu/docker-stack.yml myapp',
               'echo Deployment complete!'
