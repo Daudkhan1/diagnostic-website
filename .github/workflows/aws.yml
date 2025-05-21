@@ -42,6 +42,7 @@ jobs:
           AWS_DEFAULT_REGION: ${{ secrets.AMAZON_S3_REGION_NAME }}
 
       # Step 5: Deploy Docker Stack on EC2 via SSM (Docker Swarm)
+# Step 5: Deploy Docker Stack on EC2 via SSM (Docker Swarm)
       - name: Deploy Docker Stack via SSM
         run: |
           S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
@@ -62,7 +63,7 @@ jobs:
               'echo Logging into ECR...',
               'aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ECR_URI}',
               'echo Deploying with Docker Stack...',
-              'docker stack deploy -c /home/ubuntu/docker-stack.yml --with-registry-auth myapp', # <--- Add --with-registry-auth here
+              'docker stack deploy -c /home/ubuntu/docker-stack.yml --with-registry-auth myapp',
               'echo Deployment complete!'
             ]" \
             --comment "Swarm Deployment with Zero Downtime" \
@@ -101,3 +102,9 @@ jobs:
               sleep 10
             fi
           done
+          shell: /usr/bin/bash -e {0}
+        env:
+            AWS_DEFAULT_REGION: ${{ secrets.AMAZON_S3_REGION_NAME }} # Ensure these are correctly set
+            AWS_REGION: ${{ secrets.AMAZON_S3_REGION_NAME }}
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
